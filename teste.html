@@ -1,0 +1,197 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Simulador de Negócios RPG</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #0a1931;
+            color: #ffffff;
+            margin: 0;
+            padding: 0;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 100vh;
+        }
+
+        #game {
+            text-align: center;
+            background-color: #185adb;
+            border-radius: 10px;
+            padding: 20px;
+            box-shadow: 0px 4px 10px rgba(0, 0, 0, 0.2);
+            width: 80%;
+            max-width: 600px;
+        }
+
+        #balance {
+            font-size: 24px;
+            margin-bottom: 20px;
+            color: #f4d160;
+        }
+
+        button {
+            margin-top: 20px;
+            padding: 10px 20px;
+            background-color: #f4d160;
+            color: #0a1931;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 18px;
+            transition: background-color 0.3s;
+        }
+
+        button:hover {
+            background-color: #ffc947;
+        }
+
+        #result p {
+            margin-top: 10px;
+        }
+
+        #news {
+            background-color: #ffc947;
+            color: #0a1931;
+            padding: 10px;
+            border-radius: 5px;
+            margin-bottom: 10px;
+        }
+    </style>
+</head>
+
+<body>
+    <div id="game">
+        <h1>Simulador de Negócios RPG</h1>
+        <div id="balance">Saldo: R$1000</div>
+        <div id="news"></div>
+        <p>Escolha sua área de investimento:</p>
+        <button onclick="chooseArea('restaurante')">Restaurante</button><br>
+        <button onclick="chooseArea('tecnologia')">Tecnologia</button><br>
+        <button onclick="chooseArea('roupas')">Loja de Roupas</button><br>
+        <div id="result"></div>
+    </div>
+
+    <script>
+        let capital = 1000;
+        let turnos = 5;
+        let investmentsUsed = { banco: 0, aposentada: 0, agiota: 0 };
+        const maxUses = 3;
+        const goal = 4000;
+        let areaSelected = '';
+        let newsEffect = 0; // Impacto das notícias nos retornos
+
+        function randomEvent() {
+            const events = [
+                { text: "Uma nova regulamentação aumenta os impostos sobre restaurantes.", effect: { restaurante: -0.1 } },
+                { text: "O governo dá subsídios para o setor de tecnologia.", effect: { tecnologia: 0.2 } },
+                { text: "A indústria da moda é abalada por uma nova tendência inesperada.", effect: { roupas: -0.15 } },
+                { text: "Houve uma escassez de insumos para restaurantes, o custo aumenta.", effect: { restaurante: -0.2 } },
+                { text: "Grandes avanços tecnológicos reduzem os custos em tecnologia.", effect: { tecnologia: 0.15 } },
+                { text: "A demanda por roupas está em alta devido à uma nova coleção de inverno.", effect: { roupas: 0.3 } },
+                { text: "Uma greve de funcionários afeta o setor de restaurantes.", effect: { restaurante: -0.25 } },
+                { text: "Uma onda de compras online aumenta os lucros no setor de tecnologia.", effect: { tecnologia: 0.25 } },
+                { text: "Os custos de produção de roupas aumentam devido à inflação.", effect: { roupas: -0.1 } },
+                { text: "A inflação está controlada, o setor de restaurantes vê aumento de demanda.", effect: { restaurante: 0.15 } },
+                { text: "Uma nova rede de restaurantes entra no mercado, aumentando a concorrência.", effect: { restaurante: -0.1 } },
+                { text: "A demanda por produtos de tecnologia dispara com o lançamento de novos dispositivos.", effect: { tecnologia: 0.3 } },
+                { text: "Uma crise financeira afeta negativamente o setor de moda.", effect: { roupas: -0.2 } },
+                { text: "Investidores internacionais trazem mais dinheiro para o setor de restaurantes.", effect: { restaurante: 0.2 } },
+                { text: "Uma nova linha de roupas sustentáveis aumenta as vendas de roupas.", effect: { roupas: 0.25 } }
+            ];
+            const randomEvent = events[Math.floor(Math.random() * events.length)];
+            document.getElementById("news").textContent = randomEvent.text;
+            newsEffect = randomEvent.effect[areaSelected] || 0;
+        }
+
+        function checkWin() {
+            if (capital >= goal) {
+                document.getElementById("result").innerHTML = "<p>Parabéns! Você atingiu R$4000!</p>";
+                disableButtons();
+            } else if (turnos === 0) {
+                document.getElementById("result").innerHTML = "<p>Fim do jogo! Você terminou com R$" + capital.toFixed(2) + ".</p>";
+                disableButtons();
+            }
+        }
+
+        function disableButtons() {
+            document.querySelectorAll("button").forEach(btn => btn.disabled = true);
+        }
+
+        function chooseArea(area) {
+            areaSelected = area;
+            document.getElementById("result").innerHTML = `<p>Você escolheu o setor de ${areaSelected}.</p>`;
+            randomEvent(); // Mostra a notícia antes de escolher o investimento
+            chooseInvestment();
+        }
+
+        function chooseInvestment() {
+            document.getElementById("result").innerHTML += `
+                <p>Escolha onde investir:</p>
+                <button onclick="invest('banco')">Banco (100% seguro, 20% retorno)</button>
+                <button onclick="invest('aposentada')">Senhora Aposentada (85% seguro, 45% retorno)</button>
+                <button onclick="invest('agiota')">Agiota (50% seguro, 85% retorno)</button>
+            `;
+        }
+
+        function invest(option) {
+            if (investmentsUsed[option] >= maxUses) {
+                alert(`Você já usou o ${option} o máximo de vezes!`);
+                return;
+            }
+
+            const investment = prompt("Quanto você quer investir? (Seu capital atual: R$" + capital + ")");
+            const investmentAmount = parseFloat(investment);
+
+            if (isNaN(investmentAmount) || investmentAmount <= 0 || investmentAmount > capital) {
+                alert("Valor inválido. Tente novamente.");
+                return;
+            }
+
+            capital -= investmentAmount;
+            investmentsUsed[option]++;
+            turnos--;
+
+            let success = false;
+            let returnAmount = 0;
+
+            switch (option) {
+                case 'banco':
+                    success = true; // 100% seguro
+                    returnAmount = investmentAmount * (1.2 + newsEffect); // Notícias afetam o retorno
+                    break;
+                case 'aposentada':
+                    success = Math.random() <= 0.85; // 85% de chance
+                    returnAmount = success ? investmentAmount * (1.45 + newsEffect) : 0;
+                    break;
+                case 'agiota':
+                    success = Math.random() <= 0.5; // 50% de chance
+                    returnAmount = success ? investmentAmount * (1.85 + newsEffect) : 0;
+                    break;
+            }
+
+            capital += returnAmount;
+
+            const resultMessage = success
+                ? `Você investiu R$${investmentAmount.toFixed(2)} e ganhou R$${returnAmount.toFixed(2)}.`
+                : `Você perdeu o investimento de R$${investmentAmount.toFixed(2)}.`;
+
+            document.getElementById("result").innerHTML += `<p>${resultMessage} Seu saldo atual é R$${capital.toFixed(2)}.</p>`;
+            document.getElementById("balance").textContent = "Saldo: R$" + capital.toFixed(2);
+
+            checkWin();
+            if (turnos > 0 && capital < goal) {
+                randomEvent(); // Nova notícia a cada turno
+            }
+        }
+
+        document.getElementById("news").textContent = randomEvent();
+    </script>
+</body>
+
+</html>
